@@ -512,10 +512,6 @@ function addRow(tc, vis, vo, st, imgUrl) {
         '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 附圖</label>' +
         '<div class="rimg-preview"><img class="rimg-thumb"><button type="button" class="rimg-del" onclick="delRowImg(this)">×</button></div>' +
       '</div>' +
-      '<select class="stsel" style="margin-top:5px;font-size:11px;width:100%;">' +
-        '<option value="">字幕—</option><option value="Sub">Sub</option>' +
-        '<option value="Big">Big</option><option value="Location">Location</option>' +
-      '</select>' +
     '</td>' +
     '<td><button type="button" class="btni" aria-label="刪除" onclick="delRow(this)">' +
       '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
@@ -523,7 +519,7 @@ function addRow(tc, vis, vo, st, imgUrl) {
   var ces = tr.querySelectorAll('[contenteditable]');
   if (vis) ces[0].textContent = vis;
   if (vo) ces[1].textContent = vo;
-  if (st) tr.querySelector('.stsel').value = st;
+  // st (style) removed
   if (imgUrl) {
     var zone = tr.querySelector('.rimg-zone');
     var prev = zone.querySelector('.rimg-preview');
@@ -550,7 +546,7 @@ function getRows() {
       (tr.querySelector('.tci') || {}).value || '',
       (ces[0] || {}).textContent || '',
       (ces[1] || {}).textContent || '',
-      (tr.querySelector('.stsel') || {}).value || '']);
+      '']);
   });
   return rows;
 }
@@ -652,7 +648,12 @@ function collectMaterials() {
     var u = el.querySelector('input[type="url"]');
     if (u && u.value.trim()) {
       var ytId = ytVideoId(u.value.trim());
-      if (ytId) imgs.push('https://img.youtube.com/vi/' + ytId + '/maxresdefault.jpg');
+      if (ytId) {
+        // 1/2/3.jpg = YouTube 自動從影片內容取的截圖（非封面）
+        imgs.push('https://img.youtube.com/vi/' + ytId + '/1.jpg');
+        imgs.push('https://img.youtube.com/vi/' + ytId + '/2.jpg');
+        imgs.push('https://img.youtube.com/vi/' + ytId + '/3.jpg');
+      }
     }
   });
   document.querySelectorAll('#flist .sitem').forEach(function(el) {
