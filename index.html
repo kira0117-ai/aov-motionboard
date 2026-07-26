@@ -196,7 +196,12 @@ td{padding:4px 7px;vertical-align:top;}
     <div class="lp-scroll">
       <div class="lhd">
         <p class="ey">for 想像力豐富的剪片麻瓜</p>
-        <h1>影片DEMO生成器</h1>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <h1>影片DEMO生成器</h1>
+          <button class="btni" onclick="openSettings()" title="設定 Google AI Key（免費啟用 AI 腳本）" style="flex-shrink:0;margin-top:6px;color:var(--t2)" aria-label="設定">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
       </div>
 
       <form id="form" novalidate onsubmit="gen(event)">
@@ -270,6 +275,13 @@ td{padding:4px 7px;vertical-align:top;}
 
     <!-- Sticky submit -->
     <div class="lp-sub">
+      <div id="ai-status" style="display:none;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);margin-bottom:7px;align-items:center;gap:5px">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;flex-shrink:0"></span>
+        AI 腳本已啟用（Google · 免費）
+      </div>
+      <div id="ai-hint" style="font-size:10px;color:var(--t3);margin-bottom:7px;line-height:1.5">
+        ⚙ 點右上角齒輪設定免費 AI Key，自動生成完整腳本
+      </div>
       <button type="submit" form="form" class="btnp" id="btnp">產出腳本 →</button>
     </div>
   </div>
@@ -365,6 +377,29 @@ td{padding:4px 7px;vertical-align:top;}
         複製 Apps Script
       </button>
       <button class="btn-ghost" onclick="closeModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="moverlay" id="smodal" onclick="closeSettings(event)">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="mhd">
+      <span class="mhd-t">設定 · AI 自動腳本 <span style="color:var(--ok);font-size:11px;font-weight:600">（免費）</span></span>
+      <button class="btni" onclick="closeSettings()" aria-label="關閉"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mbody">
+      <p class="msub">使用 <strong>Google Gemini API</strong>（完全免費）自動理解影片說明，生成畫面描述與 VO 文案。</p>
+      <p class="msub" style="margin-top:6px">取得免費 Key：前往 <strong style="color:var(--ac)">aistudio.google.com/app/apikey</strong> → 登入 Google 帳號 → 建立 API 金鑰</p>
+      <div class="fi" style="margin-top:14px">
+        <label class="fl" for="aikey">Google AI API Key</label>
+        <input type="password" id="aikey" placeholder="AIza..." autocomplete="off">
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn-cp" onclick="saveSettings()">儲存</button>
+      <button class="btn-ghost" onclick="clearKey()" style="color:var(--err);border-color:var(--err)">清除 Key</button>
+      <button class="btn-ghost" onclick="closeSettings()">取消</button>
     </div>
   </div>
 </div>
@@ -553,6 +588,64 @@ function delRowImg(btn) {
   zone.querySelector('input[type="file"]').value = '';
 }
 
+/* ── SETTINGS ── */
+function openSettings() {
+  document.getElementById('smodal').classList.add('open');
+  var k = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('aikey').value = k ? k.slice(0,8) + '…' : '';
+}
+function closeSettings(e) {
+  if (!e || e.target === document.getElementById('smodal'))
+    document.getElementById('smodal').classList.remove('open');
+}
+function saveSettings() {
+  var v = document.getElementById('aikey').value.trim();
+  if (v && !v.includes('…')) localStorage.setItem('gemini_api_key', v);
+  document.getElementById('smodal').classList.remove('open');
+  updateAiStatus();
+  showToast('API Key 已儲存，AI 腳本已啟用 ✓');
+}
+function clearKey() {
+  localStorage.removeItem('gemini_api_key');
+  document.getElementById('aikey').value = '';
+  document.getElementById('smodal').classList.remove('open');
+  updateAiStatus();
+  showToast('API Key 已清除');
+}
+function updateAiStatus() {
+  var hasKey = !!localStorage.getItem('gemini_api_key');
+  var stat = document.getElementById('ai-status');
+  var hint = document.getElementById('ai-hint');
+  if (stat) stat.style.display = hasKey ? 'flex' : 'none';
+  if (hint) hint.style.display = hasKey ? 'none' : 'block';
+}
+
+/* ── GEMINI AI STORYBOARD ── */
+async function genWithGemini(brief, emotion, orient, dur, n) {
+  var key = localStorage.getItem('gemini_api_key');
+  if (!key) return null;
+  var prompt =
+    '你是專業影片分鏡腳本師，擅長電競賽事行銷影片。\n' +
+    '依以下影片說明，生成 ' + n + ' 個場景的分鏡腳本。\n\n' +
+    '影片說明：\n' + brief + '\n' +
+    (emotion ? '\n情緒主軸：' + emotion + '\n' : '') +
+    '\n目標時長：' + dur + ' 秒　比例：' + (orient === 'portrait' ? '直式 9:16' : '橫式 16:9') + '\n\n' +
+    '只回傳 JSON 陣列，不含其他文字。格式：\n' +
+    '[{"visual":"具體畫面描述（繁體中文，描述要呈現什麼畫面）","vo":"VO 或字幕文案，純視覺無台詞填（無）"}]\n\n' +
+    '共 ' + n + ' 個場景，請完整填寫。';
+  var resp = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key,
+    {method: 'POST', headers: {'Content-Type': 'application/json'},
+     body: JSON.stringify({contents: [{parts: [{text: prompt}]}]})}
+  );
+  if (!resp.ok) { var er = await resp.json().catch(function(){ return {}; }); throw new Error((er.error && er.error.message) || resp.status); }
+  var d = await resp.json();
+  var txt = d.candidates[0].content.parts[0].text.trim();
+  var m = txt.match(/\[[\s\S]*\]/);
+  if (!m) throw new Error('格式錯誤');
+  return JSON.parse(m[0]);
+}
+
 /* ── MATERIAL IMAGES ── */
 function ytVideoId(url) {
   var m = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -600,7 +693,7 @@ function chunkContent(brief, emotion, n) {
 }
 
 /* ── SUBMIT / GENERATE ── */
-function gen(e) {
+async function gen(e) {
   e.preventDefault();
   var pn = document.getElementById('pname');
   if (!pn.value.trim()) { pn.style.borderColor = 'var(--err)'; pn.focus(); return; }
@@ -614,10 +707,32 @@ function gen(e) {
   document.getElementById('sempty').style.display = 'none';
   document.getElementById('scontent').style.display = 'flex';
   document.getElementById('pbar-btns').style.display = 'flex';
-  document.getElementById('tbody').innerHTML = ''; rc = 0;
   var imgs = collectMaterials();
   var brief = document.getElementById('brief').value.trim();
   var emotion = document.getElementById('emotion').value.trim();
+  var geminiKey = localStorage.getItem('gemini_api_key');
+  if (geminiKey && brief) {
+    var btn = document.getElementById('btnp');
+    var orig = btn.textContent; btn.textContent = 'AI 分析腳本中…'; btn.disabled = true;
+    try {
+      var scenes = await genWithGemini(brief, emotion, getOrient(), dur, tcs.length);
+      if (scenes && scenes.length) {
+        document.getElementById('tbody').innerHTML = ''; rc = 0;
+        scenes.forEach(function(s, i) {
+          var vo = (s.vo === '（無）' || s.vo === '(無)') ? '' : (s.vo || '');
+          addRow(tcs[i] || '', s.visual || '', vo, '', imgs.length ? imgs[i % imgs.length] : null);
+        });
+        btn.textContent = orig; btn.disabled = false;
+        showToast('AI 腳本已產出 ✓');
+        return;
+      }
+    } catch(err) {
+      console.warn('Gemini:', err.message);
+      showToast('AI 失敗，改用文字拆分：' + err.message);
+    }
+    btn.textContent = orig; btn.disabled = false;
+  }
+  document.getElementById('tbody').innerHTML = ''; rc = 0;
   var content = (brief || emotion) ? chunkContent(brief, emotion, tcs.length) : null;
   tcs.forEach(function(tc, i) {
     var vis = content ? content[i].vis : '';
@@ -797,6 +912,7 @@ function showToast(msg) {
 
 // Init
 addLink();
+updateAiStatus();
 
 /* ── LOCALHOST AUTO-LOAD ── */
 (function() {
