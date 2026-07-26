@@ -287,9 +287,9 @@ td{padding:4px 7px;vertical-align:top;}
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.876V15.12a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
             匯出 Demo 影片指令
           </button>
-          <button class="btn-ex" onclick="downloadCSV()">
+          <button class="btn-ex" onclick="exportSheet()">
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-            下載 CSV（拖入 Google Sheets）
+            匯出美化版 Google Sheets
           </button>
         </div>
       </div>
@@ -547,30 +547,103 @@ function delRowImg(btn) {
   zone.querySelector('input[type="file"]').value = '';
 }
 
-/* ── CSV EXPORT ── */
-function downloadCSV() {
+/* ── GOOGLE SHEETS EXPORT (美化版 Apps Script) ── */
+function exportSheet() {
   var proj = (document.getElementById('pname').value.trim() || '影片工單');
-  var rows = getRows();
-  var header = ['場景', '時間碼', '畫面說明', 'VO / 字幕文案'];
-  var csvRows = [header].concat(rows.map(function(r) {
-    return [r[0], r[1], r[2], r[3]];
-  }));
-  var csv = '﻿' + csvRows.map(function(row) {
-    return row.map(function(cell) {
-      var s = String(cell).replace(/"/g, '""');
-      return (s.includes(',') || s.includes('\n') || s.includes('"')) ? '"' + s + '"' : s;
-    }).join(',');
-  }).join('\r\n');
-  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = proj + '_分鏡腳本.csv';
-  a.click();
-  showToast('CSV 已下載，拖入 Google Sheets 即完成 ✓');
+  // Collect rows with image URLs
+  var rowData = [];
+  document.querySelectorAll('#tbody tr').forEach(function(tr, i) {
+    var ces = tr.querySelectorAll('[contenteditable]');
+    var thumb = tr.querySelector('.rimg-thumb');
+    var imgUrl = (thumb && thumb.src && !thumb.src.startsWith('blob:')) ? thumb.src : '';
+    rowData.push({
+      tc: (tr.querySelector('.tci') || {}).value || '',
+      vis: (ces[0] || {}).textContent || '',
+      vo: (ces[1] || {}).textContent || '',
+      img: imgUrl
+    });
+  });
+
+  var dataLines = rowData.map(function(r) {
+    return '  {tc:' + JSON.stringify(r.tc) + ',vis:' + JSON.stringify(r.vis) +
+           ',vo:' + JSON.stringify(r.vo) + ',img:' + JSON.stringify(r.img) + '}';
+  }).join(',\n');
+
+  var script =
+'function createMotionBoard() {\n' +
+'  var ss = SpreadsheetApp.getActiveSpreadsheet();\n' +
+'  var name = ' + JSON.stringify(proj + ' · 分鏡腳本') + ';\n' +
+'  var old = ss.getSheetByName(name); if (old) ss.deleteSheet(old);\n' +
+'  var sh = ss.insertSheet(name);\n' +
+'\n' +
+'  // ── 欄寬 ──\n' +
+'  sh.setColumnWidth(1, 90);\n' +
+'  sh.setColumnWidth(2, 290);\n' +
+'  sh.setColumnWidth(3, 180);\n' +
+'  sh.setColumnWidth(4, 270);\n' +
+'  sh.setColumnWidth(5, 190);\n' +
+'\n' +
+'  // ── 標題列 ──\n' +
+'  var hdr = sh.getRange(1,1,1,5);\n' +
+'  hdr.setValues([["秒數","畫面說明","畫面示意（參考）","旁白 / 字幕文字","情緒說明"]]);\n' +
+'  hdr.setBackground("#0f172a").setFontColor("#f8fafc").setFontWeight("bold")\n' +
+'     .setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(10);\n' +
+'  sh.setRowHeight(1, 42);\n' +
+'  sh.setFrozenRows(1);\n' +
+'\n' +
+'  // ── 資料 ──\n' +
+'  var data = [\n' + dataLines + '\n  ];\n' +
+'\n' +
+'  for (var i = 0; i < data.length; i++) {\n' +
+'    var row = i + 2;\n' +
+'    var d = data[i];\n' +
+'    var bg = (i % 2 === 0) ? "#0f172a" : "#1e293b";\n' +
+'    var rowH = d.img ? 130 : 72;\n' +
+'    sh.setRowHeight(row, rowH);\n' +
+'\n' +
+'    // 秒數 — 金橘色\n' +
+'    sh.getRange(row,1).setValue(d.tc)\n' +
+'      .setBackground(bg).setFontColor("#f59e0b").setFontWeight("bold")\n' +
+'      .setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(10);\n' +
+'\n' +
+'    // 畫面說明\n' +
+'    sh.getRange(row,2).setValue(d.vis)\n' +
+'      .setBackground(bg).setFontColor("#e2e8f0").setWrap(true)\n' +
+'      .setVerticalAlignment("top").setFontSize(10);\n' +
+'\n' +
+'    // 示意圖 (IMAGE 公式，只接受 https://)\n' +
+'    if (d.img && d.img.indexOf("https://") === 0) {\n' +
+'      sh.getRange(row,3).setFormula(\'=IMAGE("\' + d.img + \'",1)\')\n' +
+'        .setBackground(bg);\n' +
+'    } else {\n' +
+'      sh.getRange(row,3).setBackground(bg).setFontColor("#3a455f")\n' +
+'        .setValue("—").setHorizontalAlignment("center").setVerticalAlignment("middle");\n' +
+'    }\n' +
+'\n' +
+'    // 旁白 / 字幕\n' +
+'    sh.getRange(row,4).setValue(d.vo)\n' +
+'      .setBackground(bg).setFontColor("#94a3b8").setWrap(true)\n' +
+'      .setVerticalAlignment("top").setFontSize(10).setFontStyle("italic");\n' +
+'\n' +
+'    // 情緒說明（留空讓用戶填）\n' +
+'    sh.getRange(row,5).setBackground(bg);\n' +
+'  }\n' +
+'\n' +
+'  // ── 整體外框 ──\n' +
+'  var full = sh.getRange(1,1,data.length+1,5);\n' +
+'  full.setBorder(false,false,false,false,true,true,"#1d2540",SpreadsheetApp.BorderStyle.SOLID);\n' +
+'\n' +
+'  SpreadsheetApp.flush();\n' +
+'  SpreadsheetApp.getUi().alert("✅ 分鏡腳本已建立！\\n工作表：" + name);\n' +
+'}';
+
+  document.getElementById('mcode').textContent = script;
+  document.getElementById('moverlay').classList.add('open');
 }
 
-/* ── GROQ AI STORYBOARD (via Cloudflare Worker proxy) ── */
+/* ── GROQ AI STORYBOARD ── */
 var AI_WORKER = 'https://aov-motion-ai.chouk.workers.dev/';
+var GROQ_DIRECT = 'https://api.groq.com/openai/v1/chat/completions';
 async function genWithGroq(brief, emotion, orient, dur, n) {
   var prompt =
     '你是專業影片分鏡腳本師，擅長電競賽事行銷影片。\n' +
@@ -581,21 +654,24 @@ async function genWithGroq(brief, emotion, orient, dur, n) {
     '只回傳 JSON 陣列，不含其他文字。格式：\n' +
     '[{"visual":"具體畫面描述（繁體中文，描述要呈現什麼畫面）","vo":"VO 或字幕文案，純視覺無台詞填（無）"}]\n\n' +
     '共 ' + n + ' 個場景，請完整填寫。';
-  var resp = await fetch(AI_WORKER, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{role: 'user', content: prompt}],
-      temperature: 0.7, max_tokens: 4096
-    })
-  });
-  if (!resp.ok) { var er = await resp.json().catch(function(){ return {}; }); throw new Error((er.error && er.error.message) || resp.status); }
-  var d = await resp.json();
-  var txt = d.choices[0].message.content.trim();
-  var m = txt.match(/\[[\s\S]*\]/);
-  if (!m) throw new Error('格式錯誤');
-  return JSON.parse(m[0]);
+  var body = JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:4096});
+  // Try Worker first; fall back to direct Groq with stored key
+  var endpoints = [{url: AI_WORKER, headers: {'Content-Type': 'application/json'}}];
+  var key = localStorage.getItem('groq_api_key');
+  if (key) endpoints.push({url: GROQ_DIRECT, headers: {'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'}});
+  var lastErr;
+  for (var i = 0; i < endpoints.length; i++) {
+    try {
+      var resp = await fetch(endpoints[i].url, {method:'POST', headers:endpoints[i].headers, body:body});
+      var d = await resp.json();
+      if (!resp.ok) throw new Error((d.error && d.error.message) || resp.status);
+      var txt = d.choices[0].message.content.trim();
+      var m = txt.match(/\[[\s\S]*\]/);
+      if (!m) throw new Error('格式錯誤');
+      return JSON.parse(m[0]);
+    } catch(e) { lastErr = e; }
+  }
+  throw lastErr || new Error('AI 無法使用');
 }
 
 /* ── MATERIAL IMAGES ── */
