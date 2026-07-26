@@ -80,6 +80,9 @@ select option{background:var(--sf);color:var(--t1);}
 .btnp{width:100%;background:var(--ac);color:#06080e;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:11px;cursor:pointer;border:none;border-radius:var(--r);font-family:var(--font);transition:filter .15s;}
 .btnp:hover{filter:brightness(1.08);}
 .btnp:focus-visible{box-shadow:0 0 0 3px var(--acd);outline:none;}
+.btnp:disabled{opacity:.55;cursor:not-allowed;filter:none;}
+.btn-confirm{width:100%;background:var(--ok);color:#06080e;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer;border:none;border-radius:var(--r);font-family:var(--font);transition:filter .15s;margin-top:2px;}
+.btn-confirm:hover{filter:brightness(1.08);}
 
 /* RIGHT PANEL */
 .rp{display:flex;flex-direction:column;overflow:hidden;}
@@ -193,7 +196,12 @@ td{padding:4px 7px;vertical-align:top;}
     <div class="lp-scroll">
       <div class="lhd">
         <p class="ey">for 想像力豐富的剪片麻瓜</p>
-        <h1>影片DEMO生成器</h1>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <h1>影片DEMO生成器</h1>
+          <button class="btni" onclick="openSettings()" title="設定 API Key（啟用 AI 自動腳本）" style="flex-shrink:0;margin-top:6px;color:var(--t2)" aria-label="設定">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
       </div>
 
       <form id="form" novalidate onsubmit="gen(event)">
@@ -311,6 +319,7 @@ td{padding:4px 7px;vertical-align:top;}
           </table>
         </div>
         <button class="btna" onclick="addRow('','','','')">+ 新增場景</button>
+        <button class="btn-confirm" onclick="exportVideoCmd()">腳本確認 · 產出 Demo →</button>
       </div>
     </div>
 
@@ -361,6 +370,29 @@ td{padding:4px 7px;vertical-align:top;}
         複製 Apps Script
       </button>
       <button class="btn-ghost" onclick="closeModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="moverlay" id="smodal" onclick="closeSettings(event)">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="mhd">
+      <span class="mhd-t">設定 · AI 自動腳本</span>
+      <button class="btni" onclick="closeSettings()" aria-label="關閉"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mbody">
+      <p class="msub">輸入 Anthropic API Key，產出腳本時 AI 將自動填入畫面說明與 VO 文案。Key 只存在你的瀏覽器本機，不會上傳。</p>
+      <div class="fi" style="margin-top:12px">
+        <label class="fl" for="apikey">Anthropic API Key</label>
+        <input type="password" id="apikey" placeholder="sk-ant-api03-..." autocomplete="off">
+      </div>
+      <p class="msub" style="font-size:11px;margin-top:8px;color:var(--t3)">沒有 Key？到 <strong style="color:var(--ac)">console.anthropic.com</strong> → API Keys 取得</p>
+    </div>
+    <div class="mft">
+      <button class="btn-cp" onclick="saveSettings()">儲存</button>
+      <button class="btn-ghost" onclick="clearKey()" style="color:var(--err);border-color:var(--err)">清除 Key</button>
+      <button class="btn-ghost" onclick="closeSettings()">取消</button>
     </div>
   </div>
 </div>
@@ -538,29 +570,89 @@ function delRowImg(btn) {
   zone.querySelector('input[type="file"]').value = '';
 }
 
+/* ── SETTINGS ── */
+function openSettings() {
+  document.getElementById('smodal').classList.add('open');
+  var k = localStorage.getItem('claude_api_key') || '';
+  document.getElementById('apikey').value = k ? k.slice(0,12) + '…' : '';
+}
+function closeSettings(e) {
+  if (!e || e.target === document.getElementById('smodal'))
+    document.getElementById('smodal').classList.remove('open');
+}
+function saveSettings() {
+  var v = document.getElementById('apikey').value.trim();
+  if (v && !v.includes('…')) localStorage.setItem('claude_api_key', v);
+  document.getElementById('smodal').classList.remove('open');
+  showToast('API Key 已儲存 ✓');
+}
+function clearKey() {
+  localStorage.removeItem('claude_api_key');
+  document.getElementById('apikey').value = '';
+  document.getElementById('smodal').classList.remove('open');
+  showToast('API Key 已清除');
+}
+
+/* ── AI STORYBOARD ── */
+async function genStoryboard(proj, dur, tcs) {
+  var key = localStorage.getItem('claude_api_key');
+  if (!key) return null;
+  var brief   = document.getElementById('brief').value.trim();
+  var emotion = document.getElementById('emotion').value.trim();
+  var orient  = getOrient();
+  var sys = '你是專業影片分鏡腳本師，擅長電競、賽事行銷影片。依工單生成分鏡腳本。只回傳 JSON 陣列，不含其他文字。格式：[{"tc":"時間碼","visual":"畫面描述（繁體中文，具體）","vo":"旁白或字幕（繁體中文），純視覺填（無）","style":"Sub|Big|Location|"}]\nSub=下方字幕，Big=大字置中，Location=地點標籤，空字串=無字幕。';
+  var user = '專案：' + proj + '\n時長：' + dur + 's\n比例：' + (orient === 'portrait' ? '直式9:16' : '橫式16:9') + '\n說明：' + brief + (emotion ? '\n情緒：' + emotion : '') + '\n\n以下 ' + tcs.length + ' 個場景，依序填入分鏡（tc 維持原值）：\n' + tcs.map(function(tc, i) { return (i + 1) + '. ' + tc; }).join('\n');
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+    body: JSON.stringify({model: 'claude-haiku-4-5-20251001', max_tokens: 4096, system: sys, messages: [{role: 'user', content: user}]})
+  });
+  if (!resp.ok) { var er = await resp.json().catch(function() { return {}; }); throw new Error((er.error && er.error.message) || resp.status); }
+  var d = await resp.json();
+  var txt = d.content[0].text.trim();
+  var m = txt.match(/\[[\s\S]*\]/);
+  if (!m) throw new Error('格式錯誤');
+  return JSON.parse(m[0]);
+}
+
 /* ── SUBMIT / GENERATE ── */
-function gen(e) {
+async function gen(e) {
   e.preventDefault();
   var pn = document.getElementById('pname');
   if (!pn.value.trim()) { pn.style.borderColor = 'var(--err)'; pn.focus(); return; }
   pn.style.borderColor = '';
-
   var proj = pn.value.trim();
   document.getElementById('oproj').textContent = proj + ' · 腳本';
-
   var durEl = document.querySelector('input[name="dur"]:checked');
   var dur = durEl ? parseInt(durEl.value) || 0 : 90;
   if (dur === 0) { var cv = parseInt(document.getElementById('cuslen').value) || 90; dur = cv; }
-
-  document.getElementById('tbody').innerHTML = '';
-  rc = 0;
-  genScenes(dur).forEach(function(tc) { addRow(tc, '', '', ''); });
-
+  var tcs = genScenes(dur);
   document.getElementById('sempty').style.display = 'none';
   document.getElementById('scontent').style.display = 'flex';
   document.getElementById('pbar-btns').style.display = 'flex';
-
-  showToast('腳本已產出 ✓');
+  var key = localStorage.getItem('claude_api_key');
+  var brief = document.getElementById('brief').value.trim();
+  if (key && brief) {
+    var btn = document.querySelector('.btnp');
+    var orig = btn.textContent; btn.textContent = 'AI 生成腳本中…'; btn.disabled = true;
+    try {
+      var scenes = await genStoryboard(proj, dur, tcs);
+      if (scenes && scenes.length) {
+        document.getElementById('tbody').innerHTML = ''; rc = 0;
+        scenes.forEach(function(s) { addRow(s.tc || '', s.visual || '', s.vo || '', s.style || ''); });
+        btn.textContent = orig; btn.disabled = false;
+        showToast('AI 腳本已產出 ✓');
+        return;
+      }
+    } catch(err) {
+      console.warn('Claude API:', err.message);
+      showToast('AI 生成失敗：' + err.message);
+    }
+    btn.textContent = orig; btn.disabled = false;
+  }
+  document.getElementById('tbody').innerHTML = ''; rc = 0;
+  tcs.forEach(function(tc) { addRow(tc, '', '', ''); });
+  showToast(key && brief ? '腳本已產出（AI 無法連線）✓' : '腳本已產出 ✓');
 }
 
 /* ── VIDEO ── */
