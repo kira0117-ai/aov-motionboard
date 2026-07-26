@@ -266,6 +266,17 @@ td{padding:4px 7px;vertical-align:top;}
           </div>
           <div class="slist" id="flist"></div>
         </div>
+
+        <div class="fgsep"></div>
+        <div class="fi">
+          <label class="fl">BGM 背景音樂</label>
+          <div class="sitem" id="bgm-zone" style="cursor:pointer;flex-direction:row;align-items:center;gap:8px;padding:9px 10px" onclick="document.getElementById('bgm-input').click()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--t3)"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            <span id="bgm-label" style="flex:1;font-size:12.5px;color:var(--t2)">點擊上傳 MP3 / WAV / AAC</span>
+            <button type="button" id="bgm-clear" style="display:none;background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0" onclick="clearBGM(event)" title="移除 BGM">×</button>
+          </div>
+          <input type="file" id="bgm-input" accept="audio/*" style="display:none" onchange="loadBGM(this)">
+        </div>
       </form>
     </div>
 
@@ -1014,6 +1025,24 @@ async function _drawScene(ctx, W, H, imgEl, text, durMs) {
   }
 }
 
+/* ── BGM ── */
+var _bgmFile = null;
+function loadBGM(inp) {
+  if (!inp.files[0]) return;
+  _bgmFile = inp.files[0];
+  document.getElementById('bgm-label').textContent = '🎵 ' + _bgmFile.name;
+  document.getElementById('bgm-clear').style.display = 'flex';
+  document.getElementById('bgm-zone').style.borderColor = 'var(--ac)';
+}
+function clearBGM(e) {
+  e.stopPropagation();
+  _bgmFile = null;
+  document.getElementById('bgm-label').textContent = '點擊上傳 MP3 / WAV / AAC';
+  document.getElementById('bgm-clear').style.display = 'none';
+  document.getElementById('bgm-zone').style.borderColor = '';
+  document.getElementById('bgm-input').value = '';
+}
+
 async function generateBrowserDemo() {
   var rows = getRows();
   if (!rows.length) { showToast('請先產出腳本'); return; }
@@ -1027,10 +1056,33 @@ async function generateBrowserDemo() {
   var mtype = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
     .find(function(t){ return MediaRecorder.isTypeSupported(t); }) || 'video/webm';
   var stream = canvas.captureStream(25);
+
+  // ── 混入 BGM ──
+  var audioCtx = null, bgmSource = null, gainNode = null;
+  if (_bgmFile) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var ab = await _bgmFile.arrayBuffer();
+      var audioBuf = await audioCtx.decodeAudioData(ab);
+      var dest = audioCtx.createMediaStreamDestination();
+      gainNode = audioCtx.createGain();
+      gainNode.gain.value = 0.8;
+      bgmSource = audioCtx.createBufferSource();
+      bgmSource.buffer = audioBuf;
+      bgmSource.loop = true;
+      bgmSource.connect(gainNode);
+      gainNode.connect(dest);
+      dest.stream.getAudioTracks().forEach(function(t) { stream.addTrack(t); });
+      bgmSource.start(0);
+    } catch(e) { console.warn('BGM error:', e); audioCtx = null; bgmSource = null; }
+  }
+
   var rec = new MediaRecorder(stream, {mimeType: mtype, videoBitsPerSecond: 5000000});
   var chunks = [];
   rec.ondataavailable = function(e){ if(e.data.size>0) chunks.push(e.data); };
   rec.onstop = function(){
+    if (bgmSource) { try { bgmSource.stop(); } catch(e){} }
+    if (audioCtx) audioCtx.close();
     var blob = new Blob(chunks, {type: mtype});
     _showVid(URL.createObjectURL(blob));
     btn.textContent = orig; btn.disabled = false;
@@ -1049,6 +1101,11 @@ async function generateBrowserDemo() {
     var durS = _parseDur(row[1]);
     var text = (row[3] && row[3].trim()) ? row[3] : (row[2] || '');
     await _drawScene(ctx, W, H, imgEl, text, durS * 1000);
+  }
+  // 淡出 BGM
+  if (gainNode && audioCtx) {
+    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+    await _sleep(1500);
   }
   rec.stop();
 }
