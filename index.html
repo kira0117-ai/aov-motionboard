@@ -249,9 +249,9 @@ td{padding:4px 7px;vertical-align:top;}
             <div class="uzone" id="uzone" onclick="document.getElementById('uinput').click()">
               <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
               <p>點擊或拖放上傳素材</p>
-              <small>支援 mp4、mov 等格式，可多選</small>
+              <small>影片、圖片、PDF 等任何格式，可多選</small>
             </div>
-            <input type="file" id="uinput" accept="video/*" multiple style="display:none" onchange="handleUpload(this.files)">
+            <input type="file" id="uinput" multiple style="display:none" onchange="handleUpload(this.files)">
           </div>
           <div class="slist" id="flist"></div>
         </div>
@@ -383,6 +383,14 @@ function addLink() {
 function delLink(i) { var e = document.getElementById('li-' + i); if (e) e.remove(); }
 
 /* ── FILE UPLOAD ── */
+function fileIcon(name) {
+  var ext = (name.split('.').pop() || '').toLowerCase();
+  if (['mp4','mov','avi','mkv','webm','m4v','wmv'].includes(ext)) return '🎬';
+  if (['jpg','jpeg','png','gif','webp','svg','bmp','tiff','heic'].includes(ext)) return '🖼️';
+  if (ext === 'pdf') return '📄';
+  if (['psd','ai','eps','sketch','fig'].includes(ext)) return '🎨';
+  return '📎';
+}
 function handleUpload(files) {
   Array.from(files).forEach(function(f) {
     var id = 'f' + Date.now() + Math.floor(Math.random() * 1000);
@@ -391,7 +399,7 @@ function handleUpload(files) {
     var top = document.createElement('div');
     top.className = 'sitem-top';
     var nm = document.createElement('span');
-    nm.className = 'sitem-fname'; nm.textContent = '📎 ' + f.name;
+    nm.className = 'sitem-fname'; nm.textContent = fileIcon(f.name) + ' ' + f.name;
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'btni'; btn.setAttribute('aria-label', '移除');
     btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
