@@ -573,6 +573,32 @@ function collectMaterials() {
   return imgs;
 }
 
+/* ── BRIEF → SCENES ── */
+function chunkContent(brief, emotion, n) {
+  var segs = [];
+  if (brief) {
+    segs = brief.split(/[。！？；\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+    if (segs.length < Math.ceil(n / 2))
+      segs = brief.split(/[，、。！？；\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+  }
+  var emo = emotion ? emotion.split(/[→>、，,]+/).map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var frac = n > 1 ? i / (n - 1) : 0;
+    var vis = '', vo = '';
+    if (segs.length > 0) {
+      var si = Math.min(Math.round(frac * (segs.length - 1)), segs.length - 1);
+      vis = segs[si];
+    }
+    if (emo.length > 0) {
+      var ei = Math.min(Math.round(frac * (emo.length - 1)), emo.length - 1);
+      vo = emo[ei];
+    }
+    out.push({vis: vis, vo: vo});
+  }
+  return out;
+}
+
 /* ── SUBMIT / GENERATE ── */
 function gen(e) {
   e.preventDefault();
@@ -590,8 +616,13 @@ function gen(e) {
   document.getElementById('pbar-btns').style.display = 'flex';
   document.getElementById('tbody').innerHTML = ''; rc = 0;
   var imgs = collectMaterials();
+  var brief = document.getElementById('brief').value.trim();
+  var emotion = document.getElementById('emotion').value.trim();
+  var content = (brief || emotion) ? chunkContent(brief, emotion, tcs.length) : null;
   tcs.forEach(function(tc, i) {
-    addRow(tc, '', '', '', imgs.length ? imgs[i % imgs.length] : null);
+    var vis = content ? content[i].vis : '';
+    var vo  = content ? content[i].vo  : '';
+    addRow(tc, vis, vo, '', imgs.length ? imgs[i % imgs.length] : null);
   });
   showToast('腳本已產出 ✓');
 }
