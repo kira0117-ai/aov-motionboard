@@ -197,12 +197,7 @@ td{padding:4px 7px;vertical-align:top;}
     <div class="lp-scroll">
       <div class="lhd">
         <p class="ey">for 想像力豐富的剪片麻瓜</p>
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-          <h1>影片DEMO生成器</h1>
-          <button class="btni" onclick="openSettings()" title="設定 Google AI Key（免費啟用 AI 腳本）" style="flex-shrink:0;margin-top:6px;color:var(--t2)" aria-label="設定">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          </button>
-        </div>
+        <h1>影片DEMO生成器</h1>
       </div>
 
       <form id="form" novalidate onsubmit="gen(event)">
@@ -276,10 +271,7 @@ td{padding:4px 7px;vertical-align:top;}
 
     <!-- Sticky submit -->
     <div class="lp-sub">
-      <div id="ai-hint" style="font-size:10px;color:var(--t3);margin-bottom:7px;line-height:1.5">
-        ⚙ 點右上角齒輪設定免費 AI Key，自動生成完整腳本
-      </div>
-      <button type="submit" form="form" class="btnp" id="btnp">產出腳本 →</button>
+<button type="submit" form="form" class="btnp" id="btnp">產出腳本 →</button>
     </div>
   </div>
 
@@ -295,9 +287,9 @@ td{padding:4px 7px;vertical-align:top;}
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.876V15.12a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
             匯出 Demo 影片指令
           </button>
-          <button class="btn-ex" onclick="exportSheet()">
+          <button class="btn-ex" onclick="downloadCSV()">
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-            匯出 Google Sheet 腳本
+            下載 CSV（拖入 Google Sheets）
           </button>
         </div>
       </div>
@@ -374,28 +366,6 @@ td{padding:4px 7px;vertical-align:top;}
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
-<div class="moverlay" id="smodal" onclick="closeSettings(event)">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
-    <div class="mhd">
-      <span class="mhd-t">設定 · AI 自動腳本 <span style="color:var(--ok);font-size:11px;font-weight:600">（免費）</span></span>
-      <button class="btni" onclick="closeSettings()" aria-label="關閉"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mbody">
-      <p class="msub">使用 <strong>Groq API</strong>（完全免費）自動理解影片說明，生成畫面描述與 VO 文案。</p>
-      <p class="msub" style="margin-top:6px">取得免費 Key：前往 <strong style="color:var(--ac)">console.groq.com/keys</strong> → 登入 → Create API Key</p>
-      <div class="fi" style="margin-top:14px">
-        <label class="fl" for="aikey">Groq API Key</label>
-        <input type="password" id="aikey" placeholder="gsk_..." autocomplete="off">
-      </div>
-    </div>
-    <div class="mft">
-      <button class="btn-cp" onclick="saveSettings()">儲存</button>
-      <button class="btn-ghost" onclick="clearKey()" style="color:var(--err);border-color:var(--err)">清除 Key</button>
-      <button class="btn-ghost" onclick="closeSettings()">取消</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -577,40 +547,31 @@ function delRowImg(btn) {
   zone.querySelector('input[type="file"]').value = '';
 }
 
-/* ── SETTINGS ── */
-function openSettings() {
-  document.getElementById('smodal').classList.add('open');
-  var k = localStorage.getItem('gemini_api_key') || '';
-  document.getElementById('aikey').value = k ? k.slice(0,8) + '…' : '';
-}
-function closeSettings(e) {
-  if (!e || e.target === document.getElementById('smodal'))
-    document.getElementById('smodal').classList.remove('open');
-}
-function saveSettings() {
-  var v = document.getElementById('aikey').value.trim();
-  if (v && !v.includes('…')) localStorage.setItem('groq_api_key', v);
-  document.getElementById('smodal').classList.remove('open');
-  updateAiStatus();
-  showToast('API Key 已儲存，AI 腳本已啟用 ✓');
-}
-function clearKey() {
-  localStorage.removeItem('groq_api_key');
-  document.getElementById('aikey').value = '';
-  document.getElementById('smodal').classList.remove('open');
-  updateAiStatus();
-  showToast('API Key 已清除');
-}
-function updateAiStatus() {
-  var hasKey = !!localStorage.getItem('groq_api_key');
-  var hint = document.getElementById('ai-hint');
-  if (hint) hint.style.display = hasKey ? 'none' : 'block';
+/* ── CSV EXPORT ── */
+function downloadCSV() {
+  var proj = (document.getElementById('pname').value.trim() || '影片工單');
+  var rows = getRows();
+  var header = ['場景', '時間碼', '畫面說明', 'VO / 字幕文案'];
+  var csvRows = [header].concat(rows.map(function(r) {
+    return [r[0], r[1], r[2], r[3]];
+  }));
+  var csv = '﻿' + csvRows.map(function(row) {
+    return row.map(function(cell) {
+      var s = String(cell).replace(/"/g, '""');
+      return (s.includes(',') || s.includes('\n') || s.includes('"')) ? '"' + s + '"' : s;
+    }).join(',');
+  }).join('\r\n');
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = proj + '_分鏡腳本.csv';
+  a.click();
+  showToast('CSV 已下載，拖入 Google Sheets 即完成 ✓');
 }
 
-/* ── GROQ AI STORYBOARD ── */
+/* ── GROQ AI STORYBOARD (via Cloudflare Worker proxy) ── */
+var AI_WORKER = 'https://aov-motion-ai.chouk.workers.dev/';
 async function genWithGroq(brief, emotion, orient, dur, n) {
-  var key = localStorage.getItem('groq_api_key');
-  if (!key) return null;
   var prompt =
     '你是專業影片分鏡腳本師，擅長電競賽事行銷影片。\n' +
     '依以下影片說明，生成 ' + n + ' 個場景的分鏡腳本。\n\n' +
@@ -620,9 +581,9 @@ async function genWithGroq(brief, emotion, orient, dur, n) {
     '只回傳 JSON 陣列，不含其他文字。格式：\n' +
     '[{"visual":"具體畫面描述（繁體中文，描述要呈現什麼畫面）","vo":"VO 或字幕文案，純視覺無台詞填（無）"}]\n\n' +
     '共 ' + n + ' 個場景，請完整填寫。';
-  var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  var resp = await fetch(AI_WORKER, {
     method: 'POST',
-    headers: {'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       messages: [{role: 'user', content: prompt}],
@@ -706,8 +667,7 @@ async function gen(e) {
   var imgs = collectMaterials();
   var brief = document.getElementById('brief').value.trim();
   var emotion = document.getElementById('emotion').value.trim();
-  var groqKey = localStorage.getItem('groq_api_key');
-  if (groqKey && brief) {
+  if (brief) {
     var btn = document.getElementById('btnp');
     var orig = btn.textContent; btn.textContent = 'AI 分析腳本中…'; btn.disabled = true;
     try {
@@ -723,7 +683,7 @@ async function gen(e) {
         return;
       }
     } catch(err) {
-      console.warn('Gemini:', err.message);
+      console.warn('AI:', err.message);
       showToast('AI 失敗，改用文字拆分：' + err.message);
     }
     btn.textContent = orig; btn.disabled = false;
@@ -771,40 +731,6 @@ function goFullscreen() {
   });
 })();
 
-/* ── EXPORT ── */
-function exportSheet() {
-  var proj = (document.getElementById('pname').value.trim() || '影片工單');
-  var rows = getRows();
-  var rc2 = rows.map(function(r) {
-    return '    [' + r.map(function(v) { return JSON.stringify(String(v)); }).join(',') + ']';
-  }).join(',\n');
-
-  var script =
-    'function createMotionBoard() {\n' +
-    '  const ss = SpreadsheetApp.getActiveSpreadsheet();\n' +
-    '  const name = ' + JSON.stringify(proj + ' · 腳本') + ';\n' +
-    '  const old = ss.getSheetByName(name); if (old) ss.deleteSheet(old);\n' +
-    '  const sh = ss.insertSheet(name);\n' +
-    '  const hdr = [["場景","時間碼","畫面說明","VO / 字幕文案","字幕風格"]];\n' +
-    '  const data = [\n' + rc2 + '\n  ];\n' +
-    '  sh.getRange(1,1,1,5).setValues(hdr).setFontWeight("bold")\n' +
-    '    .setBackground("#0f172a").setFontColor("#f1f5f9").setHorizontalAlignment("center");\n' +
-    '  if (data.length) sh.getRange(2,1,data.length,5).setValues(data);\n' +
-    '  sh.setColumnWidth(1,55); sh.setColumnWidth(2,90);\n' +
-    '  sh.setColumnWidth(3,320); sh.setColumnWidth(4,320); sh.setColumnWidth(5,100);\n' +
-    '  sh.setFrozenRows(1);\n' +
-    '  for (let i=2; i<=data.length+1; i++) {\n' +
-    '    sh.getRange(i,1,1,5).setBackground(i%2===0?"#1e293b":"#0f172a")\n' +
-    '      .setFontColor("#cbd5e1").setVerticalAlignment("top");\n' +
-    '  }\n' +
-    '  sh.getRange(2,3,Math.max(data.length,1),2).setWrap(true);\n' +
-    '  SpreadsheetApp.flush();\n' +
-    '  Logger.log("✅ " + name);\n' +
-    '}';
-
-  document.getElementById('mcode').textContent = script;
-  document.getElementById('moverlay').classList.add('open');
-}
 
 function closeModal(e) {
   if (!e || e.target === document.getElementById('moverlay'))
@@ -1021,7 +947,6 @@ async function generateBrowserDemo() {
 
 // Init
 addLink();
-updateAiStatus();
 
 /* ── LOCALHOST AUTO-LOAD ── */
 (function() {
