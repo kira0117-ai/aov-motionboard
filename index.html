@@ -326,7 +326,7 @@ td{padding:4px 7px;vertical-align:top;}
           </table>
         </div>
         <button class="btna" onclick="addRow('','','','')">+ 新增場景</button>
-        <button class="btn-confirm" onclick="exportVideoCmd()">腳本確認 · 產出 Demo →</button>
+        <button class="btn-confirm" onclick="generateBrowserDemo()">腳本確認 · 產出 Demo →</button>
       </div>
     </div>
 
@@ -913,6 +913,118 @@ function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg || '已複製 ✓'; t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+/* ── BROWSER CANVAS DEMO GENERATOR ── */
+function _sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+function _loadImg(src) {
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() { resolve(img); };
+    img.onerror = function() { reject(new Error('load failed')); };
+    img.src = src;
+  });
+}
+
+function _parseDur(tc) {
+  var m = tc.match(/(\d+):(\d+)[–\-](\d+):(\d+)/);
+  if (!m) return 4;
+  return Math.max(1, (parseInt(m[3]) * 60 + parseInt(m[4])) - (parseInt(m[1]) * 60 + parseInt(m[2])));
+}
+
+function _wrapText(ctx, text, maxW) {
+  var lines = [], cur = '';
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
+    if (c === '\n') { lines.push(cur); cur = ''; continue; }
+    var t = cur + c;
+    if (ctx.measureText(t).width > maxW && cur.length > 0) { lines.push(cur); cur = c; }
+    else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+async function _drawScene(ctx, W, H, imgEl, text, durMs) {
+  var FPS = 25, frameMs = 1000 / FPS;
+  var t0 = performance.now(), elapsed = 0;
+  while (elapsed < durMs) {
+    var p = Math.min(1, elapsed / durMs);
+    ctx.fillStyle = '#05060f';
+    ctx.fillRect(0, 0, W, H);
+    if (imgEl) {
+      ctx.globalAlpha = Math.min(1, p * 8);
+      var sc = Math.max(W / imgEl.naturalWidth, H / imgEl.naturalHeight);
+      var sw = imgEl.naturalWidth * sc, sh = imgEl.naturalHeight * sc;
+      ctx.drawImage(imgEl, (W - sw) / 2, (H - sh) / 2, sw, sh);
+      ctx.globalAlpha = 1;
+      var vig = ctx.createRadialGradient(W/2,H/2,H*0.15,W/2,H/2,H*0.75);
+      vig.addColorStop(0,'transparent'); vig.addColorStop(1,'rgba(0,0,0,0.6)');
+      ctx.fillStyle = vig; ctx.fillRect(0,0,W,H);
+    }
+    var txt = (text || '').replace(/（無）|\(無\)/g,'').trim();
+    if (txt) {
+      var charN = Math.ceil(p * txt.length * 5);
+      var show = txt.slice(0, Math.min(txt.length, charN));
+      var fs = Math.round(W * 0.033);
+      ctx.font = 'bold ' + fs + 'px "Microsoft JhengHei","Noto Sans TC",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      var lh = Math.round(fs * 1.45);
+      var lines = _wrapText(ctx, show, W * 0.86);
+      var totalH = lines.length * lh;
+      var yBase = H - Math.round(H * 0.055) - totalH;
+      ctx.fillStyle = 'rgba(0,0,0,0.52)';
+      ctx.fillRect(W*0.03, yBase - lh*0.35, W*0.94, totalH + lh*0.7);
+      ctx.shadowColor='rgba(0,0,0,0.9)'; ctx.shadowBlur=5;
+      ctx.fillStyle='#fff';
+      lines.forEach(function(l,i){ ctx.fillText(l, W/2, yBase+(i+1)*lh); });
+      ctx.shadowBlur=0;
+    }
+    var wait = t0 + elapsed + frameMs - performance.now();
+    if (wait > 0) await _sleep(wait);
+    elapsed = performance.now() - t0;
+  }
+}
+
+async function generateBrowserDemo() {
+  var rows = getRows();
+  if (!rows.length) { showToast('請先產出腳本'); return; }
+  var btn = document.querySelector('.btn-confirm');
+  var orig = btn.textContent; btn.textContent = '影片生成中…'; btn.disabled = true;
+  var orient = getOrient();
+  var W = orient === 'portrait' ? 1080 : 1280, H = orient === 'portrait' ? 1920 : 720;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  var mtype = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
+    .find(function(t){ return MediaRecorder.isTypeSupported(t); }) || 'video/webm';
+  var stream = canvas.captureStream(25);
+  var rec = new MediaRecorder(stream, {mimeType: mtype, videoBitsPerSecond: 5000000});
+  var chunks = [];
+  rec.ondataavailable = function(e){ if(e.data.size>0) chunks.push(e.data); };
+  rec.onstop = function(){
+    var blob = new Blob(chunks, {type: mtype});
+    _showVid(URL.createObjectURL(blob));
+    btn.textContent = orig; btn.disabled = false;
+    showToast('Demo 已生成，右下角播放 ✓');
+  };
+  rec.start(200);
+  var trs = document.querySelectorAll('#tbody tr');
+  var matUrls = collectMaterials();
+  for (var i = 0; i < rows.length; i++) {
+    var thumb = trs[i] ? trs[i].querySelector('.rimg-thumb') : null;
+    var url = (thumb && thumb.src && thumb.src.length > 10 && !thumb.src.endsWith('/')) ? thumb.src
+            : (matUrls.length ? matUrls[i % matUrls.length] : null);
+    var imgEl = null;
+    if (url) { try { imgEl = await _loadImg(url); } catch(e){} }
+    var row = rows[i];
+    var durS = _parseDur(row[1]);
+    var text = (row[3] && row[3].trim()) ? row[3] : (row[2] || '');
+    await _drawScene(ctx, W, H, imgEl, text, durS * 1000);
+  }
+  rec.stop();
 }
 
 // Init
