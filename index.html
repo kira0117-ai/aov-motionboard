@@ -1,0 +1,706 @@
+<title>影片DEMO生成器</title>
+<style>
+:root{--bg:#08090f;--dot:rgba(255,255,255,.025);--sf:#111520;--sfr:#171c2d;--bd:#1d2540;--bdf:#d4a843;--ac:#d4a843;--acd:rgba(212,168,67,.12);--ab:#4fa3e0;--t1:#eef2ff;--t2:#8a9ac0;--t3:#3a455f;--err:#e85065;--ok:#3dba80;--r:2px;--font:-apple-system,BlinkMacSystemFont,"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;--mono:"SFMono-Regular","Consolas","Menlo",monospace;}
+@media(prefers-color-scheme:light){:root{--bg:#f1f3f8;--dot:rgba(0,0,0,.04);--sf:#fff;--sfr:#f6f7fb;--bd:#dce0ed;--bdf:#b8901a;--ac:#b8901a;--acd:rgba(184,144,26,.1);--ab:#2574c0;--t1:#0d1120;--t2:#5a6480;--t3:#b8bfd0;--err:#c0303f;--ok:#18875c;}}
+:root[data-theme=dark]{--bg:#08090f;--dot:rgba(255,255,255,.025);--sf:#111520;--sfr:#171c2d;--bd:#1d2540;--bdf:#d4a843;--ac:#d4a843;--acd:rgba(212,168,67,.12);--ab:#4fa3e0;--t1:#eef2ff;--t2:#8a9ac0;--t3:#3a455f;--err:#e85065;--ok:#3dba80;}
+:root[data-theme=light]{--bg:#f1f3f8;--dot:rgba(0,0,0,.04);--sf:#fff;--sfr:#f6f7fb;--bd:#dce0ed;--bdf:#b8901a;--ac:#b8901a;--acd:rgba(184,144,26,.1);--ab:#2574c0;--t1:#0d1120;--t2:#5a6480;--t3:#b8bfd0;--err:#c0303f;--ok:#18875c;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:var(--font);background-color:var(--bg);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1px);background-size:28px 28px;color:var(--t1);display:flex;flex-direction:column;overflow:hidden;}
+
+/* MARQUEE */
+.mq{flex-shrink:0;background:var(--ac);overflow:hidden;padding:5px 0;}
+.mqi{display:flex;animation:mq 28s linear infinite;width:max-content;}
+.mqt{white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#06080e;padding:0 28px;}
+@keyframes mq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.mqi{animation:none}}
+
+/* MAIN LAYOUT */
+.main{flex:1;display:grid;grid-template-columns:348px 1fr;overflow:hidden;min-height:0;}
+
+/* LEFT PANEL */
+.lp{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.lp-scroll{flex:1;overflow-y:auto;padding:20px 20px 16px;}
+
+/* LEFT HEADER */
+.lhd{margin-bottom:18px;}
+.ey{font-size:10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--ac);margin-bottom:6px;}
+.lhd h1{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--t1);}
+
+/* FORM GROUPS */
+.fg{display:flex;flex-direction:column;gap:12px;}
+.fg+.fg{margin-top:4px;}
+.fgsep{height:1px;background:var(--bd);margin:16px 0;}
+.fgtitle{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--t2);margin-bottom:2px;}
+
+/* FIELDS */
+.fi{display:flex;flex-direction:column;gap:4px;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+label.fl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);}
+.req{color:var(--ac);margin-left:2px;}
+input[type=text],input[type=url],textarea,select{background:var(--sfr);border:1px solid var(--bd);border-radius:var(--r);color:var(--t1);font-family:var(--font);font-size:13.5px;padding:7px 10px;width:100%;transition:border-color .15s,box-shadow .15s;outline:none;-webkit-appearance:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--bdf);box-shadow:0 0 0 2px var(--acd);}
+input::placeholder,textarea::placeholder{color:var(--t3);font-size:13px;}
+textarea{resize:vertical;line-height:1.5;}
+select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;}
+select option{background:var(--sf);color:var(--t1);}
+
+/* PILLS */
+.pg{display:flex;gap:5px;flex-wrap:wrap;}
+.pill{position:relative;}
+.pill input{position:absolute;opacity:0;pointer-events:none;}
+.pill label{display:block;padding:5px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;}
+.pill input:checked+label{border-color:var(--ac);color:var(--ac);background:var(--acd);}
+.pill label:hover{border-color:var(--t2);color:var(--t1);}
+
+/* SOURCE ITEMS */
+.slist{display:flex;flex-direction:column;gap:7px;}
+.sitem{background:var(--sfr);border:1px solid var(--bd);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
+.sitem-top{display:flex;gap:6px;align-items:center;}
+.sitem-url{flex:1;min-width:0;}
+.sitem-fname{font-size:13px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sitem-desc{font-size:12.5px;padding:5px 9px;border:1px dashed var(--bd);background:transparent;color:var(--t1);border-radius:var(--r);width:100%;}
+.sitem-desc::placeholder{color:var(--t3);font-size:12px;}
+.sitem-desc:focus{border-color:var(--bdf);border-style:solid;box-shadow:0 0 0 2px var(--acd);outline:none;}
+
+/* UPLOAD ZONE */
+.uzone{border:1px dashed var(--bd);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;transition:all .15s;}
+.uzone:hover,.uzone.drag{border-color:var(--ac);background:var(--acd);}
+.uzone p{font-size:13px;color:var(--t2);margin-top:6px;}
+.uzone small{font-size:11px;color:var(--t3);}
+
+/* BUTTONS */
+.btni{width:26px;height:26px;padding:0;background:transparent;border:none;color:var(--t3);cursor:pointer;border-radius:var(--r);display:flex;align-items:center;justify-content:center;transition:color .15s;flex-shrink:0;outline:none;}
+.btni:hover{color:var(--err);}
+.btna{background:transparent;border:1px dashed var(--bd);color:var(--t2);width:100%;padding:7px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:var(--font);transition:all .15s;border-radius:var(--r);}
+.btna:hover{border-color:var(--ac);color:var(--ac);}
+
+/* SUBMIT STICKY */
+.lp-sub{flex-shrink:0;padding:12px 20px 16px;background:linear-gradient(0deg,var(--bg) 60%,transparent);}
+.btnp{width:100%;background:var(--ac);color:#06080e;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:11px;cursor:pointer;border:none;border-radius:var(--r);font-family:var(--font);transition:filter .15s;}
+.btnp:hover{filter:brightness(1.08);}
+.btnp:focus-visible{box-shadow:0 0 0 3px var(--acd);outline:none;}
+
+/* RIGHT PANEL */
+.rp{display:flex;flex-direction:column;overflow:hidden;}
+
+/* PANEL BAR */
+.pbar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--sfr);border-bottom:1px solid var(--bd);flex-shrink:0;gap:8px;}
+.pbar-t{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--t2);}
+.pbar-t em{color:var(--ac);font-style:normal;}
+.pbar-btns{display:flex;gap:6px;align-items:center;}
+.btn-ex{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;background:var(--acd);border:1px solid var(--ac);color:var(--ac);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-family:var(--font);border-radius:var(--r);transition:all .15s;}
+.btn-ex:hover{background:var(--ac);color:#06080e;}.btn-cmd{background:rgba(79,163,224,.15);border-color:var(--ab);color:var(--ab);}.btn-cmd:hover{background:var(--ab);color:#06080e;}
+.btn-fs{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:transparent;border:1px solid var(--bd);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);border-radius:var(--r);transition:all .15s;}
+.btn-fs:hover{border-color:var(--t2);color:var(--t1);}
+
+/* STORYBOARD AREA */
+.rp-top{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;}
+.sempty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px;text-align:center;}
+.sempty svg{color:var(--t3);}
+.sempty p{font-size:14px;color:var(--t2);}
+.sempty small{font-size:12px;color:var(--t3);}
+.scontent{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+
+/* TABLE */
+.twrap{overflow-x:auto;border:1px solid var(--bd);border-radius:var(--r);}
+table{border-collapse:collapse;width:100%;min-width:520px;}
+thead tr{background:var(--sfr);}
+th{padding:8px 9px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--bd);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:nth-child(even){background:var(--sfr);}
+tbody tr:hover{background:rgba(212,168,67,.04);}
+td{padding:4px 7px;vertical-align:top;}
+.t-num{font-size:11px;color:var(--t3);text-align:center;padding:5px 3px;min-width:26px;user-select:none;}
+.t-tc input{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--t2);font-family:var(--mono);font-size:12px;padding:3px 4px;width:94px;outline:none;transition:border-color .15s;}
+.t-tc input:focus{border-bottom-color:var(--bdf);}
+.t-ce [contenteditable]{color:var(--t1);font-size:12.5px;line-height:1.5;padding:3px 5px;min-height:24px;min-width:120px;outline:none;border:1px solid transparent;border-radius:var(--r);transition:border-color .15s;white-space:pre-wrap;word-break:break-word;}
+.t-ce [contenteditable]:focus{border-color:var(--bdf);}
+.t-ce [contenteditable]:empty::before{content:attr(data-ph);color:var(--t3);pointer-events:none;}
+.t-st select{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--t2);font-size:12px;padding:3px 4px;width:84px;outline:none;cursor:pointer;font-family:var(--font);transition:border-color .15s;}
+.t-st select:focus{border-bottom-color:var(--bdf);box-shadow:none;}
+
+/* VIDEO AREA */
+.rp-bot{height:256px;flex-shrink:0;border-top:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+.vbody{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 14px;gap:8px;overflow:hidden;}
+.vdrop{flex:1;border:1px dashed var(--bd);border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .15s;text-align:center;padding:12px;}
+.vdrop:hover,.vdrop.drag{border-color:var(--ac);background:var(--acd);}
+.vdrop svg{color:var(--t3);}
+.vdrop p{font-size:13px;color:var(--t2);}
+.vdrop small{font-size:11px;color:var(--t3);}
+#vplayer{width:100%;flex:1;min-height:0;border-radius:var(--r);background:#000;display:none;object-fit:contain;}
+.vurl-row{flex-shrink:0;display:flex;gap:6px;}
+.vurl-row input{flex:1;min-width:0;padding:6px 10px;font-size:13px;}
+.vurl-row button{flex-shrink:0;padding:6px 12px;background:var(--sfr);border:1px solid var(--bd);border-radius:var(--r);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.vurl-row button:hover{border-color:var(--ac);color:var(--ac);}
+
+/* MODAL */
+.moverlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:20px;}
+.moverlay.open{display:flex;}
+.mbox{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);max-width:640px;width:100%;max-height:85vh;display:flex;flex-direction:column;}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.mhd-t{font-size:14px;font-weight:700;}
+.mbody{padding:15px 17px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:11px;}
+.msub{font-size:13px;color:var(--t2);line-height:1.65;}
+.msub strong{color:var(--ac);}
+.cscroll{background:#050710;border:1px solid var(--bd);border-radius:var(--r);overflow:auto;max-height:300px;}
+.cscroll pre{padding:13px;font-family:var(--mono);font-size:12px;color:#bdd5f8;line-height:1.65;white-space:pre;}
+.mft{display:flex;gap:8px;justify-content:flex-end;padding:11px 17px;border-top:1px solid var(--bd);flex-shrink:0;}
+.btn-cp{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;background:var(--acd);border:1px solid var(--ac);color:var(--ac);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-family:var(--font);border-radius:var(--r);transition:all .15s;}
+.btn-cp:hover{background:var(--ac);color:#06080e;}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;padding:7px 15px;background:transparent;border:1px solid var(--bd);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);border-radius:var(--r);transition:all .15s;}
+.btn-ghost:hover{border-color:var(--t2);color:var(--t1);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ok);color:#06080e;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border-radius:var(--r);opacity:0;transition:all .2s;pointer-events:none;z-index:1000;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* MOBILE */
+@media(max-width:768px){
+  html,body{height:auto;overflow:auto;}
+  body{display:block;}
+  .main{display:block;}
+  .lp{border-right:none;border-bottom:1px solid var(--bd);}
+  .lp-scroll{overflow-y:visible;}
+  .lp-sub{position:static;background:none;padding:12px 20px 24px;}
+  .rp{height:auto;}
+  .rp-top{height:auto;min-height:360px;overflow-y:visible;}
+  .rp-bot{height:280px;}
+}
+</style>
+
+<div class="mq" aria-hidden="true">
+  <div class="mqi">
+    <span class="mqt">GCS · AOV 賽事行銷</span><span class="mqt">MOTION BOARD · PRODUCTION BRIEF</span><span class="mqt">影片工單系統</span>
+    <span class="mqt">GCS · AOV 賽事行銷</span><span class="mqt">MOTION BOARD · PRODUCTION BRIEF</span><span class="mqt">影片工單系統</span>
+    <span class="mqt">GCS · AOV 賽事行銷</span><span class="mqt">MOTION BOARD · PRODUCTION BRIEF</span><span class="mqt">影片工單系統</span>
+    <span class="mqt">GCS · AOV 賽事行銷</span><span class="mqt">MOTION BOARD · PRODUCTION BRIEF</span><span class="mqt">影片工單系統</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ─── LEFT PANEL: FORM ─── -->
+  <div class="lp">
+    <div class="lp-scroll">
+      <div class="lhd">
+        <p class="ey">for 想像力豐富的剪片麻瓜</p>
+        <h1>影片DEMO生成器</h1>
+      </div>
+
+      <form id="form" novalidate onsubmit="gen(event)">
+        <!-- Group 1: 影片資訊 -->
+        <div class="fg">
+          <div class="fi">
+            <label class="fl" for="pname">專案名稱<span class="req">*</span></label>
+            <input type="text" id="pname" placeholder="例：GCS 2026 夏季賽 開幕影片">
+          </div>
+          <div class="f2">
+            <div class="fi">
+              <label class="fl" for="purpose">用途</label>
+              <select id="purpose" onchange="purposeChg(this)">
+                <option>賽季啟動宣傳</option>
+                <option selected>冠軍賽宣傳</option>
+                <option>選手介紹</option>
+                <option>賽後精華回顧</option>
+                <option>贊助商合作</option>
+                <option value="__custom">其他...</option>
+              </select>
+              <input type="text" id="purpose-custom" placeholder="請輸入用途..." style="display:none;margin-top:6px">
+            </div>
+            <div class="fi">
+              <label class="fl">目標時長</label>
+              <div class="pg">
+                <div class="pill"><input type="radio" name="dur" id="d30" value="30"><label for="d30">30s</label></div>
+                <div class="pill"><input type="radio" name="dur" id="d60" value="60"><label for="d60">60s</label></div>
+                <div class="pill"><input type="radio" name="dur" id="d90" value="90" checked><label for="d90">90s</label></div>
+                <div class="pill"><input type="radio" name="dur" id="d120" value="120"><label for="d120">120s</label></div>
+                <div class="pill"><input type="radio" name="dur" id="dcu" value="0"><label for="dcu">自訂</label></div>
+              </div>
+              <input type="text" id="cuslen" placeholder="秒數，例：75" style="display:none;margin-top:6px">
+              <div style="margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t2)">比例</span>
+                <div class="pg" style="flex:1">
+                  <div class="pill"><input type="radio" name="orient" id="oh" value="landscape" checked><label for="oh">橫式 16:9</label></div>
+                  <div class="pill"><input type="radio" name="orient" id="ov" value="portrait"><label for="ov">直式 9:16</label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fi">
+            <label class="fl" for="brief">影片內容說明</label>
+            <textarea id="brief" rows="3" placeholder="描述影片要傳達的故事、訊息、情緒走向...&#10;例：以信件口吻邀請觀眾見證 GCS 首次登上大巨蛋，從歷史情懷帶到史詩揭幕。"></textarea>
+          </div>
+          <div class="fi">
+            <label class="fl" for="emotion">情緒主軸</label>
+            <input type="text" id="emotion" placeholder="例：史詩沉穩 → 情懷感動 → 熱血爆發 → 宏大揭幕">
+          </div>
+        </div>
+
+        <div class="fgsep"></div>
+
+        <!-- Group 2: 素材來源 -->
+        <div class="fg">
+          <div class="fgtitle">素材來源</div>
+          <div class="slist" id="llist"></div>
+          <button type="button" class="btna" onclick="addLink()">+ 新增影片連結</button>
+          <div class="fi" style="margin-top:4px">
+            <div class="uzone" id="uzone" onclick="document.getElementById('uinput').click()">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+              <p>點擊或拖放上傳素材</p>
+              <small>支援 mp4、mov 等格式，可多選</small>
+            </div>
+            <input type="file" id="uinput" accept="video/*" multiple style="display:none" onchange="handleUpload(this.files)">
+          </div>
+          <div class="slist" id="flist"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Sticky submit -->
+    <div class="lp-sub">
+      <button type="submit" form="form" class="btnp">產出腳本 →</button>
+    </div>
+  </div>
+
+  <!-- ─── RIGHT PANEL ─── -->
+  <div class="rp">
+
+    <!-- Right-top: Storyboard -->
+    <div class="rp-top">
+      <div class="pbar">
+        <span class="pbar-t" id="rpt"><em id="oproj">腳本</em></span>
+        <div class="pbar-btns" id="pbar-btns" style="display:none">
+          <button class="btn-ex btn-cmd" onclick="exportVideoCmd()">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.876V15.12a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+            匯出 Demo 影片指令
+          </button>
+          <button class="btn-ex" onclick="exportSheet()">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+            匯出 Google Sheet 腳本
+          </button>
+        </div>
+      </div>
+
+      <div class="sempty" id="sempty">
+        <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>填寫左側表單，點擊「產出腳本」</p>
+        <small>系統會依照目標時長自動生成場景時間碼，可直接在此編輯</small>
+      </div>
+
+      <div id="scontent" class="scontent" style="display:none">
+        <div class="twrap">
+          <table>
+            <thead><tr>
+              <th style="width:28px">#</th>
+              <th style="width:100px">時間碼</th>
+              <th>畫面說明</th>
+              <th>VO / 字幕文案</th>
+              <th style="width:86px">字幕風格</th>
+              <th style="width:28px"></th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <button class="btna" onclick="addRow('','','','')">+ 新增場景</button>
+      </div>
+    </div>
+
+    <!-- Right-bottom: Demo video -->
+    <div class="rp-bot">
+      <div class="pbar">
+        <span class="pbar-t">Demo 影片 預覽<span id="srv-dot" style="display:none;font-size:10px;margin-left:8px;color:var(--ok)">● 本機模式</span></span>
+        <div class="pbar-btns">
+          <button class="btn-fs" id="btnfs" style="display:none" onclick="goFullscreen()">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+            全螢幕
+          </button>
+        </div>
+      </div>
+      <div class="vbody">
+        <div id="vdrop" class="vdrop" onclick="document.getElementById('vfile').click()">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-1.5A1.125 1.125 0 0118 18.375M20.625 4.5H3.375m17.25 0c.621 0 1.125.504 1.125 1.125M20.625 4.5h-1.5C18.504 4.5 18 5.004 18 5.625m3.75 0v1.5c0 .621-.504 1.125-1.125 1.125M3.375 4.5c-.621 0-1.125.504-1.125 1.125M3.375 4.5h1.5C5.496 4.5 6 5.004 6 5.625m-3.75 0v1.5c0 .621.504 1.125 1.125 1.125m0 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75C5.496 8.25 6 8.754 6 9.375v1.5m0-5.25v5.25m0-5.25C6 5.004 6.504 4.5 7.125 4.5h9.75c.621 0 1.125.504 1.125 1.125m1.125 2.625h1.5m-1.5 0A1.125 1.125 0 0118 9.375v1.5m1.5-3.75C19.496 8.25 20 8.754 20 9.375v1.5m0 0v5.25m0-5.25c0-.621.504-1.125 1.125-1.125h1.5"/></svg>
+          <p>腳本確認後，將 Claude 生成的影片拖放至此</p>
+          <small>或點擊上傳 · 支援 mp4、mov 等格式</small>
+        </div>
+        <video id="vplayer" controls></video>
+        <input type="file" id="vfile" accept="video/*" style="display:none" onchange="loadVid(this)">
+        <div class="vurl-row">
+          <input type="text" id="vurl" placeholder="或貼上影片網址...">
+          <button onclick="loadVidUrl()">載入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="moverlay" id="moverlay" onclick="closeModal(event)">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhd">
+      <span class="mhd-t">匯出 Google Sheet</span>
+      <button class="btni" onclick="closeModal()" aria-label="關閉">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="mbody">
+      <p class="msub">複製以下 Apps Script，前往 Google Sheets → <strong>擴充功能 → Apps Script</strong> → 貼上 → 執行 <strong>createMotionBoard</strong></p>
+      <div class="cscroll"><pre id="mcode"></pre></div>
+    </div>
+    <div class="mft">
+      <button class="btn-cp" onclick="copyScript()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        複製 Apps Script
+      </button>
+      <button class="btn-ghost" onclick="closeModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+var li = 0;
+
+/* ── LINK SOURCES ── */
+function addLink() {
+  li++;
+  var i = li;
+  var d = document.createElement('div');
+  d.className = 'sitem'; d.id = 'li-' + i;
+  d.innerHTML =
+    '<div class="sitem-top">' +
+      '<input type="url" id="lu-' + i + '" class="sitem-url" placeholder="YouTube / Bilibili / TikTok / 任何影片網址...">' +
+      '<button type="button" class="btni" onclick="delLink(' + i + ')" aria-label="移除">' +
+        '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>' +
+    '<input type="text" class="sitem-desc" id="ld-' + i + '" placeholder="要截取的片段或畫面（例：0:10–0:25 選手奪冠片段）">';
+  document.getElementById('llist').appendChild(d);
+}
+function delLink(i) { var e = document.getElementById('li-' + i); if (e) e.remove(); }
+
+/* ── FILE UPLOAD ── */
+function handleUpload(files) {
+  Array.from(files).forEach(function(f) {
+    var id = 'f' + Date.now() + Math.floor(Math.random() * 1000);
+    var d = document.createElement('div');
+    d.className = 'sitem'; d.id = id;
+    var top = document.createElement('div');
+    top.className = 'sitem-top';
+    var nm = document.createElement('span');
+    nm.className = 'sitem-fname'; nm.textContent = '📎 ' + f.name;
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'btni'; btn.setAttribute('aria-label', '移除');
+    btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    btn.onclick = function() { d.remove(); };
+    top.appendChild(nm); top.appendChild(btn);
+    var desc = document.createElement('input');
+    desc.type = 'text'; desc.className = 'sitem-desc';
+    desc.placeholder = '要截取的片段或畫面（例：0:00–0:30 開場節奏畫面）';
+    d.appendChild(top); d.appendChild(desc);
+    document.getElementById('flist').appendChild(d);
+  });
+}
+
+(function() {
+  var z = document.getElementById('uzone');
+  z.addEventListener('dragover', function(e) { e.preventDefault(); z.classList.add('drag'); });
+  z.addEventListener('dragleave', function() { z.classList.remove('drag'); });
+  z.addEventListener('drop', function(e) {
+    e.preventDefault(); z.classList.remove('drag');
+    handleUpload(e.dataTransfer.files);
+    document.getElementById('uinput').value = '';
+  });
+})();
+
+/* ── DURATION ── */
+document.querySelectorAll('input[name="dur"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.getElementById('cuslen').style.display = this.value === '0' ? '' : 'none';
+  });
+});
+document.getElementById('pname').addEventListener('input', function() { this.style.borderColor = ''; });
+function purposeChg(sel) {
+  document.getElementById('purpose-custom').style.display = sel.value === '__custom' ? '' : 'none';
+}
+function getPurpose() {
+  var sel = document.getElementById('purpose');
+  return sel.value === '__custom' ? (document.getElementById('purpose-custom').value.trim() || '其他') : sel.value;
+}
+function getOrient() {
+  var el = document.querySelector('input[name="orient"]:checked');
+  return el ? el.value : 'landscape';
+}
+
+/* ── STORYBOARD ── */
+var rc = 0;
+function toTC(s) {
+  var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+function genScenes(dur) {
+  var n = Math.max(5, Math.round(dur / 4.5));
+  var iv = dur / n, out = [];
+  for (var i = 0; i < n; i++) out.push(toTC(i * iv) + '–' + toTC((i + 1) * iv));
+  return out;
+}
+function addRow(tc, vis, vo, st) {
+  var tbody = document.getElementById('tbody');
+  var num = tbody.rows.length + 1;
+  rc++;
+  var tr = document.createElement('tr');
+  tr.dataset.rc = rc;
+  tr.innerHTML =
+    '<td class="t-num rn">' + num + '</td>' +
+    '<td class="t-tc"><input class="tci" value="' + esc(tc || '') + '" placeholder="0:00"></td>' +
+    '<td class="t-ce"><div contenteditable="true" data-ph="畫面說明..."></div></td>' +
+    '<td class="t-ce"><div contenteditable="true" data-ph="VO / 字幕文案..."></div></td>' +
+    '<td class="t-st"><select class="stsel">' +
+      '<option value="">—</option><option value="Sub">Sub</option>' +
+      '<option value="Big">Big</option><option value="Location">Location</option>' +
+    '</select></td>' +
+    '<td><button type="button" class="btni" aria-label="刪除" onclick="delRow(this)">' +
+      '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+    '</button></td>';
+  var ces = tr.querySelectorAll('[contenteditable]');
+  if (vis) ces[0].textContent = vis;
+  if (vo) ces[1].textContent = vo;
+  if (st) tr.querySelector('.stsel').value = st;
+  tbody.appendChild(tr);
+}
+function delRow(btn) { var tr = btn.closest('tr'); if (tr) { tr.remove(); renum(); } }
+function renum() {
+  document.querySelectorAll('#tbody tr').forEach(function(tr, i) {
+    var n = tr.querySelector('.rn'); if (n) n.textContent = i + 1;
+  });
+}
+function getRows() {
+  var rows = [];
+  document.querySelectorAll('#tbody tr').forEach(function(tr, i) {
+    var ces = tr.querySelectorAll('[contenteditable]');
+    rows.push([i + 1,
+      (tr.querySelector('.tci') || {}).value || '',
+      (ces[0] || {}).textContent || '',
+      (ces[1] || {}).textContent || '',
+      (tr.querySelector('.stsel') || {}).value || '']);
+  });
+  return rows;
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* ── SUBMIT / GENERATE ── */
+function gen(e) {
+  e.preventDefault();
+  var pn = document.getElementById('pname');
+  if (!pn.value.trim()) { pn.style.borderColor = 'var(--err)'; pn.focus(); return; }
+  pn.style.borderColor = '';
+
+  var proj = pn.value.trim();
+  document.getElementById('oproj').textContent = proj + ' · 腳本';
+
+  var durEl = document.querySelector('input[name="dur"]:checked');
+  var dur = durEl ? parseInt(durEl.value) || 0 : 90;
+  if (dur === 0) { var cv = parseInt(document.getElementById('cuslen').value) || 90; dur = cv; }
+
+  document.getElementById('tbody').innerHTML = '';
+  rc = 0;
+  genScenes(dur).forEach(function(tc) { addRow(tc, '', '', ''); });
+
+  document.getElementById('sempty').style.display = 'none';
+  document.getElementById('scontent').style.display = 'flex';
+  document.getElementById('pbar-btns').style.display = 'flex';
+
+  showToast('腳本已產出 ✓');
+}
+
+/* ── VIDEO ── */
+function loadVid(inp) {
+  if (!inp.files[0]) return;
+  _showVid(URL.createObjectURL(inp.files[0]));
+}
+function loadVidUrl() {
+  var u = document.getElementById('vurl').value.trim();
+  if (u) _showVid(u);
+}
+function _showVid(url) {
+  var p = document.getElementById('vplayer'), d = document.getElementById('vdrop');
+  p.src = url; p.style.display = 'block'; d.style.display = 'none';
+  document.getElementById('btnfs').style.display = 'inline-flex';
+}
+function goFullscreen() {
+  var v = document.getElementById('vplayer');
+  if (v.requestFullscreen) v.requestFullscreen();
+  else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+  else if (v.mozRequestFullScreen) v.mozRequestFullScreen();
+}
+
+(function() {
+  var vd = document.getElementById('vdrop');
+  vd.addEventListener('dragover', function(e) { e.preventDefault(); vd.classList.add('drag'); });
+  vd.addEventListener('dragleave', function() { vd.classList.remove('drag'); });
+  vd.addEventListener('drop', function(e) {
+    e.preventDefault(); vd.classList.remove('drag');
+    var f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('video/')) _showVid(URL.createObjectURL(f));
+  });
+})();
+
+/* ── EXPORT ── */
+function exportSheet() {
+  var proj = (document.getElementById('pname').value.trim() || '影片工單');
+  var rows = getRows();
+  var rc2 = rows.map(function(r) {
+    return '    [' + r.map(function(v) { return JSON.stringify(String(v)); }).join(',') + ']';
+  }).join(',\n');
+
+  var script =
+    'function createMotionBoard() {\n' +
+    '  const ss = SpreadsheetApp.getActiveSpreadsheet();\n' +
+    '  const name = ' + JSON.stringify(proj + ' · 腳本') + ';\n' +
+    '  const old = ss.getSheetByName(name); if (old) ss.deleteSheet(old);\n' +
+    '  const sh = ss.insertSheet(name);\n' +
+    '  const hdr = [["場景","時間碼","畫面說明","VO / 字幕文案","字幕風格"]];\n' +
+    '  const data = [\n' + rc2 + '\n  ];\n' +
+    '  sh.getRange(1,1,1,5).setValues(hdr).setFontWeight("bold")\n' +
+    '    .setBackground("#0f172a").setFontColor("#f1f5f9").setHorizontalAlignment("center");\n' +
+    '  if (data.length) sh.getRange(2,1,data.length,5).setValues(data);\n' +
+    '  sh.setColumnWidth(1,55); sh.setColumnWidth(2,90);\n' +
+    '  sh.setColumnWidth(3,320); sh.setColumnWidth(4,320); sh.setColumnWidth(5,100);\n' +
+    '  sh.setFrozenRows(1);\n' +
+    '  for (let i=2; i<=data.length+1; i++) {\n' +
+    '    sh.getRange(i,1,1,5).setBackground(i%2===0?"#1e293b":"#0f172a")\n' +
+    '      .setFontColor("#cbd5e1").setVerticalAlignment("top");\n' +
+    '  }\n' +
+    '  sh.getRange(2,3,Math.max(data.length,1),2).setWrap(true);\n' +
+    '  SpreadsheetApp.flush();\n' +
+    '  Logger.log("✅ " + name);\n' +
+    '}';
+
+  document.getElementById('mcode').textContent = script;
+  document.getElementById('moverlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('moverlay'))
+    document.getElementById('moverlay').classList.remove('open');
+}
+function copyScript() {
+  var code = document.getElementById('mcode').textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject())
+    .catch(function() {
+      var t = document.createElement('textarea');
+      t.value = code; document.body.appendChild(t); t.select();
+      document.execCommand('copy'); document.body.removeChild(t);
+    })
+    .then(function() { showToast('Apps Script 已複製 ✓'); });
+}
+
+/* ── EXPORT VIDEO CMD ── */
+function exportVideoCmd() {
+  var proj = (document.getElementById('pname').value.trim()) || '影片工單';
+  var purpose = getPurpose();
+  var orient = getOrient();
+  var res = orient === 'portrait' ? '1080×1920' : '1280×720';
+  var durEl = document.querySelector('input[name="dur"]:checked');
+  var dur = durEl ? (durEl.value === '0' ? (document.getElementById('cuslen').value || '90') : durEl.value) : '90';
+  var brief = document.getElementById('brief').value.trim();
+  var emotion = document.getElementById('emotion').value.trim();
+  var links = [];
+  document.querySelectorAll('#llist .sitem').forEach(function(el) {
+    var u = el.querySelector('input[type="url"]'), d = el.querySelector('.sitem-desc');
+    if (u && u.value.trim()) links.push({url: u.value.trim(), desc: d ? d.value.trim() : ''});
+  });
+  var files = [];
+  document.querySelectorAll('#flist .sitem').forEach(function(el) {
+    var n = el.querySelector('.sitem-fname'), d = el.querySelector('.sitem-desc');
+    if (n) files.push({name: n.textContent.replace('📎 ','').trim(), desc: d ? d.value.trim() : ''});
+  });
+  var rows = getRows();
+  var md = '# 影片 Demo 生成工單\n\n';
+  md += '| 欄位 | 內容 |\n|------|------|\n';
+  md += '| 專案名稱 | ' + proj + ' |\n';
+  md += '| 用途 | ' + purpose + ' |\n';
+  md += '| 目標時長 | ' + dur + ' 秒 |\n';
+  if (emotion) md += '| 情緒主軸 | ' + emotion + ' |\n';
+  md += '| 影片比例 | ' + (orient === 'portrait' ? '直式 9:16（Reels，1080×1920）' : '橫式 16:9（1280×720）') + ' |\n';
+  md += '\n';
+  if (brief) md += '## 影片說明\n\n' + brief + '\n\n';
+  if (links.length) {
+    md += '## 素材來源（線上影片）\n\n| # | 連結 | 截取說明 |\n|---|------|----------|\n';
+    links.forEach(function(l, i) { md += '| '+(i+1)+' | '+l.url+' | '+(l.desc||'—')+' |\n'; });
+    md += '\n';
+  }
+  if (files.length) {
+    md += '## 素材來源（本機上傳）\n\n| # | 檔案 | 截取說明 |\n|---|------|----------|\n';
+    files.forEach(function(f, i) { md += '| '+(i+1)+' | '+f.name+' | '+(f.desc||'—')+' |\n'; });
+    md += '\n';
+  }
+  if (rows.length) {
+    md += '## 腳本\n\n| 場景 | 時間碼 | 畫面說明 | VO / 字幕文案 | 字幕風格 |\n|------|--------|----------|---------------|----------|\n';
+    rows.forEach(function(r) {
+      md += '| '+r[0]+' | '+(r[1]||'—')+' | '+(r[2]||'—')+' | '+(r[3]||'—')+' | '+(r[4]||'—')+' |\n';
+    });
+    md += '\n';
+  }
+  md += '## 生成指令\n\n請按以下步驟生成 Demo 影片：\n\n';
+  md += '1. 使用 `yt-dlp` 下載所有線上素材影片\n';
+  md += '2. 根據截取說明分析素材，找出各場景對應畫面的精確時間點\n';
+  md += '3. 參照腳本時間碼撰寫 FFmpeg 剪輯腳本並執行\n';
+  md += '4. 加入 ASS 字幕、混合 BGM（如有），輸出完整影片\n\n';
+  md += '### 字幕規格（字型：Microsoft JhengHei）\n\n';
+  md += '| 樣式 | 字體大小 | 位置 | 背景 |\n|------|----------|------|------|\n';
+  md += '| Sub | 40pt | 底部 | 半透明黑底 |\n';
+  md += '| Big | 68pt | 置中 | 無 |\n';
+  md += '| Location | 32pt | 底部 | 深色標籤框 |\n\n';
+  md += '### 輸出規格\n\n- 解析度：`' + res + '`，`25fps`\n';
+  if (orient === 'portrait') {
+    md += '- 比例：直式 9:16（Reels），scale: `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black`\n';
+    md += '- ASS 字幕：PlayResX:1080 PlayResY:1920\n';
+  }
+  md += '- 格式：mp4（H.264 + AAC 192k）\n';
+  md += '- 檔名：`' + proj.replace(/[/\\:*?"<>|]/g,'') + '_Demo.mp4`\n\n';
+  md += '### 完成後（若有開啟本機伺服器）\n\n';
+  md += '生成完成後加入以下片段，H5 頁面將自動載入影片：\n\n```python\n';
+  md += 'import urllib.request, json\n';
+  md += 'try:\n    _d = json.dumps({"path": output_path}).encode()\n';
+  md += '    urllib.request.urlopen(urllib.request.Request(\n';
+  md += '        "http://localhost:8765/api/video_ready", _d,\n';
+  md += '        {"Content-Type": "application/json"}), timeout=3)\nexcept: pass\n```\n';
+  var fname = proj.replace(/[^\w一-鿿]/g,'_').replace(/_+/g,'_') + '_工單.md';
+  var blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast('工單已下載 ✓');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg || '已複製 ✓'; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+// Init
+addLink();
+
+/* ── LOCALHOST AUTO-LOAD ── */
+(function() {
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+  var dot = document.getElementById('srv-dot');
+  if (dot) dot.style.display = 'inline';
+  var lastUrl = null;
+  setInterval(function() {
+    fetch('/api/status').then(function(r) { return r.json(); }).then(function(d) {
+      if (d.ready && d.url && d.url !== lastUrl) {
+        lastUrl = d.url;
+        _showVid(d.url);
+        showToast('影片已生成，自動載入 ✓');
+      }
+    }).catch(function() {});
+  }, 3000);
+})();
+</script>
