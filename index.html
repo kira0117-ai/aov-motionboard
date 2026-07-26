@@ -81,8 +81,9 @@ select option{background:var(--sf);color:var(--t1);}
 .btnp:hover{filter:brightness(1.08);}
 .btnp:focus-visible{box-shadow:0 0 0 3px var(--acd);outline:none;}
 .btnp:disabled{opacity:.55;cursor:not-allowed;filter:none;}
-.btn-confirm{width:100%;background:var(--ok);color:#06080e;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer;border:none;border-radius:var(--r);font-family:var(--font);transition:filter .15s;margin-top:2px;}
+.btn-confirm{width:100%;background:var(--ac);color:#06080e;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer;border:none;border-radius:var(--r);font-family:var(--font);transition:filter .15s;margin-top:2px;}
 .btn-confirm:hover{filter:brightness(1.08);}
+.btn-confirm:disabled{opacity:.65;cursor:not-allowed;filter:none;}
 
 /* RIGHT PANEL */
 .rp{display:flex;flex-direction:column;overflow:hidden;}
@@ -275,10 +276,6 @@ td{padding:4px 7px;vertical-align:top;}
 
     <!-- Sticky submit -->
     <div class="lp-sub">
-      <div id="ai-status" style="display:none;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);margin-bottom:7px;align-items:center;gap:5px">
-        <span style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;flex-shrink:0"></span>
-        AI 腳本已啟用（Groq · 免費）
-      </div>
       <div id="ai-hint" style="font-size:10px;color:var(--t3);margin-bottom:7px;line-height:1.5">
         ⚙ 點右上角齒輪設定免費 AI Key，自動生成完整腳本
       </div>
@@ -349,10 +346,6 @@ td{padding:4px 7px;vertical-align:top;}
         </div>
         <video id="vplayer" controls></video>
         <input type="file" id="vfile" accept="video/*" style="display:none" onchange="loadVid(this)">
-        <div class="vurl-row">
-          <input type="text" id="vurl" placeholder="或貼上影片網址...">
-          <button onclick="loadVidUrl()">載入</button>
-        </div>
       </div>
     </div>
   </div>
@@ -614,9 +607,7 @@ function clearKey() {
 }
 function updateAiStatus() {
   var hasKey = !!localStorage.getItem('groq_api_key');
-  var stat = document.getElementById('ai-status');
   var hint = document.getElementById('ai-hint');
-  if (stat) stat.style.display = hasKey ? 'flex' : 'none';
   if (hint) hint.style.display = hasKey ? 'none' : 'block';
 }
 
