@@ -118,7 +118,14 @@ td{padding:4px 7px;vertical-align:top;}
 .t-ce [contenteditable]{color:var(--t1);font-size:12.5px;line-height:1.5;padding:3px 5px;min-height:24px;min-width:120px;outline:none;border:1px solid transparent;border-radius:var(--r);transition:border-color .15s;white-space:pre-wrap;word-break:break-word;}
 .t-ce [contenteditable]:focus{border-color:var(--bdf);}
 .t-ce [contenteditable]:empty::before{content:attr(data-ph);color:var(--t3);pointer-events:none;}
-.t-st select{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--t2);font-size:12px;padding:3px 4px;width:84px;outline:none;cursor:pointer;font-family:var(--font);transition:border-color .15s;}
+.rimg-zone{margin-top:3px;}
+.rimg-add{font-size:10px;color:var(--t3);cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 5px;border-radius:var(--r);border:1px dashed transparent;transition:all .15s;user-select:none;}
+.rimg-add:hover{color:var(--ac);border-color:var(--ac);}
+.rimg-preview{display:none;align-items:flex-start;gap:3px;position:relative;margin-top:2px;}
+.rimg-thumb{height:54px;width:auto;max-width:90px;border-radius:var(--r);object-fit:cover;border:1px solid var(--bd);cursor:zoom-in;transition:opacity .15s;}
+.rimg-thumb:hover{opacity:.8;}
+.rimg-del{position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:var(--err);border:none;color:#fff;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.t-st select{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--t2);font-size:11px;padding:2px 4px;width:100%;outline:none;cursor:pointer;font-family:var(--font);transition:border-color .15s;}
 .t-st select:focus{border-bottom-color:var(--bdf);box-shadow:none;}
 
 /* VIDEO AREA */
@@ -297,7 +304,7 @@ td{padding:4px 7px;vertical-align:top;}
               <th style="width:100px">時間碼</th>
               <th>畫面說明</th>
               <th>VO / 字幕文案</th>
-              <th style="width:86px">字幕風格</th>
+              <th style="width:112px">示意畫面</th>
               <th style="width:28px"></th>
             </tr></thead>
             <tbody id="tbody"></tbody>
@@ -466,10 +473,17 @@ function addRow(tc, vis, vo, st) {
     '<td class="t-tc"><input class="tci" value="' + esc(tc || '') + '" placeholder="0:00"></td>' +
     '<td class="t-ce"><div contenteditable="true" data-ph="畫面說明..."></div></td>' +
     '<td class="t-ce"><div contenteditable="true" data-ph="VO / 字幕文案..."></div></td>' +
-    '<td class="t-st"><select class="stsel">' +
-      '<option value="">—</option><option value="Sub">Sub</option>' +
-      '<option value="Big">Big</option><option value="Location">Location</option>' +
-    '</select></td>' +
+    '<td class="t-st">' +
+      '<div class="rimg-zone">' +
+        '<label class="rimg-add"><input type="file" accept="image/*" style="display:none" onchange="setRowImg(this)">' +
+        '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> 附圖</label>' +
+        '<div class="rimg-preview"><img class="rimg-thumb"><button type="button" class="rimg-del" onclick="delRowImg(this)">×</button></div>' +
+      '</div>' +
+      '<select class="stsel" style="margin-top:5px;font-size:11px;width:100%;">' +
+        '<option value="">字幕—</option><option value="Sub">Sub</option>' +
+        '<option value="Big">Big</option><option value="Location">Location</option>' +
+      '</select>' +
+    '</td>' +
     '<td><button type="button" class="btni" aria-label="刪除" onclick="delRow(this)">' +
       '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
     '</button></td>';
@@ -498,6 +512,31 @@ function getRows() {
   return rows;
 }
 function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* ── ROW IMAGE ── */
+function setRowImg(inp) {
+  if (!inp.files[0]) return;
+  var url = URL.createObjectURL(inp.files[0]);
+  var zone = inp.closest('.rimg-zone');
+  var prev = zone.querySelector('.rimg-preview');
+  var thumb = zone.querySelector('.rimg-thumb');
+  var lbl = zone.querySelector('.rimg-add');
+  thumb.src = url;
+  thumb.onclick = function() { window.open(url, '_blank'); };
+  prev.style.display = 'inline-flex';
+  lbl.style.display = 'none';
+}
+function delRowImg(btn) {
+  var zone = btn.closest('.rimg-zone');
+  var prev = zone.querySelector('.rimg-preview');
+  var thumb = zone.querySelector('.rimg-thumb');
+  var lbl = zone.querySelector('.rimg-add');
+  if (thumb.src) URL.revokeObjectURL(thumb.src);
+  thumb.src = ''; thumb.onclick = null;
+  prev.style.display = 'none';
+  lbl.style.display = '';
+  zone.querySelector('input[type="file"]').value = '';
+}
 
 /* ── SUBMIT / GENERATE ── */
 function gen(e) {
